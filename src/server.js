@@ -7,9 +7,9 @@ app.use(express.urlencoded({ extended: true }));
 
 app.set('view engine', 'ejs');
 app.set('view options', {
-    client: false, 
-    escapeFunction: function(html) {
-        return html.replace(/[&<>"']/g, function(match) {
+    client: false,
+    escapeFunction: function (html) {
+        return html.replace(/[&<>"']/g, function (match) {
             return {
                 '&': '&amp;',
                 '<': '&lt;',
@@ -18,8 +18,8 @@ app.set('view options', {
                 "'": '&#39;'
             }[match];
         });
-    }, 
-    escape: false 
+    },
+    escape: false
 });
 app.set('views', __dirname + '/views');
 
@@ -28,7 +28,7 @@ app.get('/', (req, res) => {
 });
 
 app.post('/request', async (req, res) => {
-    let { url, body, type } = req.body;
+    let { url, body, type, option } = req.body;
     if (!url) {
         return res.status(400).send('URL is required');
     }
@@ -40,13 +40,21 @@ app.post('/request', async (req, res) => {
     if (!Array.isArray(body)) {
         return res.status(400).send('Invalid body');
     }
-    body.forEach(({key, value}) => {
+    body.forEach(({ key, value }) => {
         data.append(key, value);
     });
     if (type === 'json') {
         data = formToJSON(data);
     }
-    const response = await post(url, data);
+    let options = new FormData();
+    option.forEach(({ key, value }) => {
+        options.append(key, value);
+    });
+    if (type === 'json') {
+        options = formToJSON(options);
+    }
+    const response = await post(url, data, options);
+
     return res.render('response', { data: response.status });
 });
 
